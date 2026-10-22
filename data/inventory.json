@@ -1,0 +1,52 @@
+{ 
+  "incident": {
+    "id": "PHP-2026-CRITICAL",
+    "cves": [
+      "CVE-2026-109618",
+      "CVE-2026-109619"
+    ],
+    "source": "CERTFR-2026-ALE-014"
+  },
+  "applications": [
+    {
+      "id": "APP-001",
+      "name": "portail-usagers",
+      "php_version": "8.3.35",
+      "exposure": "internet",
+      "business_criticality": "high",
+      "patch_status": "unknown"
+    },
+    {
+      "id": "APP-002",
+      "name": "api-paiements",
+      "php_version": "8.4.27",
+      "exposure": "internal",
+      "business_criticality": "critical",
+      "patch_status": "unknown"
+    },
+    {
+      "id": "APP-003",
+      "name": "backoffice-agents",
+      "php_version": "8.2.34",
+      "exposure": "internal",
+      "business_criticality": "medium",
+      "patch_status": "unknown"
+    },
+    {
+      "id": "APP-004",
+      "name": "legacy-documents",
+      "php_version": "7.4.33",
+      "exposure": "internet",
+      "business_criticality": "high",
+      "patch_status": "unknown"
+    },
+    {
+      "id": "APP-005",
+      "name": "service-documents",
+      "php_version": "8.3.36",
+      "exposure": "internet",
+      "business_criticality": "medium",
+      "patch_status": "unknown"
+    }
+  ]
+}
