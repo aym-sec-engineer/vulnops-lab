@@ -1,4 +1,9 @@
-from src.report import analyze_inventory, build_report, to_markdown
+from src.report import (
+    analyze_inventory,
+    build_report,
+    get_remediation_verification,
+    to_markdown,
+)
 
 
 def sample_inventory():
@@ -48,3 +53,21 @@ def test_markdown_contains_findings():
     assert "public-app" in markdown
     assert "patched-app" in markdown
     assert "TEST-INCIDENT" in markdown
+
+
+def test_patched_upstream_is_not_verified():
+    app = {
+        "php_version": "8.3.36",
+        "patch_status": "unknown",
+    }
+
+    assert get_remediation_verification(app) == "NOT_VERIFIED"
+
+
+def test_simulated_patch_is_not_verified():
+    app = {
+        "php_version": "8.3.36",
+        "patch_status": "simulated",
+    }
+
+    assert get_remediation_verification(app) == "SIMULATED_ONLY"

@@ -108,6 +108,71 @@ This tool is a proof of concept, not a production vulnerability scanner.
 - Human approval gates for remediation
 - Patch validation and rollback evidence
 
+## Security policy gate
+
+VulnOps includes a configurable version-based triage policy.
+
+Example: reject an inventory containing applications with a
+risk score greater than or equal to 70.
+
+```bash
+python -m src.policy --inventory data/inventory.json --threshold 70
+```
+
+Expected result: FAIL, exit code 1.
+
+Check the simulated post-remediation inventory:
+
+```bash
+python -m src.simulate_remediation
+python -m src.policy --inventory data/inventory-remediated.json --threshold 70
+```
+
+Expected result: PASS, exit code 0.
+
+**Important:** A passing policy only confirms that the inventory
+meets the defined version-based triage criteria. It does not
+confirm that patches are installed or verified in production.
+
+## Input validation
+
+The inventory validator checks:
+
+- Required application fields
+- Accepted exposure and criticality values
+- Duplicate application IDs
+- PHP version field types
+- Supported patch status values
+
+Invalid data is rejected rather than silently treated as low risk.
+
+## Remediation evidence
+
+Security reports distinguish:
+
+- `PATCHED_UPSTREAM`: the declared version meets an upstream threshold
+- `NOT_VERIFIED`: no verified installation evidence is available
+- `SIMULATED_ONLY`: a fictional inventory update was performed
+
+Vendor backports and installed package fixes are not automatically
+verified.
+
+## CI security controls
+
+GitHub Actions automatically runs:
+
+1. Ruff static code checks
+2. Ruff formatting verification
+3. Pytest regression tests
+4. Security report generation
+5. Expected policy rejection and acceptance scenarios
+6. Gitleaks secret scanning
+7. Security report artifact upload
+
+The pipeline demonstrates security automation on a fictional
+inventory and does not perform live vulnerability exploitation
+or production remediation.
+
 ## References
 
 - CERT-FR: https://cert.cyber.gouv.fr/alerte/CERTFR-2026-ALE-014

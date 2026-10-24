@@ -2,25 +2,29 @@ name: VulnOps Security CI
 
 on:
   push:
-    branches: [main, "feat/**"]
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
   pull_request:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  security-checks:
-    name: Python Quality and Security Checks
+  quality-and-policy:
+    name: Quality, Tests and Security Policy
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -40,8 +44,7 @@ jobs:
         run: python -m pytest tests/ -v
 
       - name: Generate baseline security report
-        run: |
-          python -m src.report
+        run: python -m src.report
 
       - name: Simulate remediation
         run: |
@@ -50,9 +53,49 @@ jobs:
             --inventory data/inventory-remediated.json \
             --output-dir reports/after
 
+      - name: Verify policy rejects vulnerable inventory
+        shell: bash
+        run: |
+          set +e
+          python -m src.policy \
+            --inventory data/inventory.json \
+            --threshold 70
+          status=$?
+          set -e
+
+          if [ "$status" -ne 1 ]; then
+            echo "::error::Expected policy exit code 1; received $status"
+            exit 1
+          fi
+
+          echo "Expected policy rejection confirmed"
+
+      - name: Verify policy accepts simulated inventory
+        run: |
+          python -m src.policy \
+            --inventory data/inventory-remediated.json \
+            --threshold 70
+
       - name: Upload security reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: vulnops-security-reports
           path: reports/
+          if-no-files-found: warn
           retention-days: 14
+
+  secret-scanning:
+    name: Gitleaks Secret Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Scan repository secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
