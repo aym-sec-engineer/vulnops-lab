@@ -5,13 +5,24 @@ from pathlib import Path
 
 from src.prioritizer import calculate_risk
 from src.scanner import check_php_version
+from src.validation import validate_inventory
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_INVENTORY = ROOT / "data" / "inventory.json"
 DEFAULT_REPORTS = ROOT / "reports"
 
 
+def get_remediation_verification(app):
+    patch_status = app.get("patch_status", "unknown")
+
+    if patch_status == "simulated":
+        return "SIMULATED_ONLY"
+
+    return "NOT_VERIFIED"
+
+
 def analyze_inventory(inventory):
+    validate_inventory(inventory)
     results = []
 
     for app in inventory["applications"]:
@@ -24,6 +35,7 @@ def analyze_inventory(inventory):
                 "name": app["name"],
                 "php_version": app["php_version"],
                 "status": status,
+                "remediation_verification": get_remediation_verification(app),
                 "risk_score": score,
                 "exposure": app["exposure"],
                 "business_criticality": app["business_criticality"],
@@ -84,8 +96,8 @@ def to_markdown(report):
         "",
         "## Prioritized findings",
         "",
-        "| Application | PHP | Status | Risk |",
-        "|---|---|---|---|",
+        "| Application | PHP | Status | Version risk | Verification |",
+        "|---|---|---|---|---|",
     ]
 
     for app in report["applications"]:
@@ -93,7 +105,9 @@ def to_markdown(report):
         score_text = str(score) if score is not None else "REVIEW"
 
         lines.append(
-            f"| {app['name']} | {app['php_version']} | {app['status']} | {score_text} |"
+            f"| {app['name']} | {app['php_version']} | "
+            f"{app['status']} | {score_text} | "
+            f"{app['remediation_verification']} |"
         )
 
     lines.extend(
