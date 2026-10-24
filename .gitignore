@@ -6,3 +6,6 @@ __pycache__/
 .env
 .env.*
 !.env.example
+data/inventory-remediated.json
+reports/**/*.json
+reports/**/*.md

@@ -1,0 +1,58 @@
+name: VulnOps Security CI
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-checks:
+    name: Python Quality and Security Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Ruff lint
+        run: python -m ruff check src/ tests/
+
+      - name: Ruff formatting
+        run: python -m ruff format --check src/ tests/
+
+      - name: Unit tests
+        run: python -m pytest tests/ -v
+
+      - name: Generate baseline security report
+        run: |
+          python -m src.report
+
+      - name: Simulate remediation
+        run: |
+          python -m src.simulate_remediation
+          python -m src.report \
+            --inventory data/inventory-remediated.json \
+            --output-dir reports/after
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnops-security-reports
+          path: reports/
+          retention-days: 14
